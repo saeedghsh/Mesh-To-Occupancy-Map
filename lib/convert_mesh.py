@@ -26,8 +26,10 @@ import cv2
 
 import sys
 sys.path.append( u'../Place-Categorization-2D-OGM/' )
-from core import place_categorization as plcat
-
+try:
+    from core import place_categorization as plcat
+except:
+    print ('WARNING: Place-Categorization-2D is not found...')
 
 # obj file
 # http://cgkit.sourceforge.net/doc2/objmtl.html
@@ -440,10 +442,6 @@ class RayCastPatcher:
         self.image [-margin:,:] = 127
         self.image [:, :margin ] = 127
         self.image [:, -margin:] = 127
-
-
-################################################################################
-
 
 ################################################################################
 class ROIPatcher:
