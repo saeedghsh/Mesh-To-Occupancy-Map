@@ -54,7 +54,7 @@ Example
 $ python mesh_to_ogm_v1.py -s -v --filename /home/saesha/Documents/tango/HIH_01_full/20170131135829.ply
 '''
 
-from __future__ import print_function
+# from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.misc
@@ -125,12 +125,11 @@ if __name__ == '__main__':
     listiterator = args[1:].__iter__()
     while 1:
         try:
-            item = listiterator.next()
+            item = next( listiterator )
             if item[:2] == '--':
-                exec(item[2:] + ' = listiterator.next()')
+                exec(item[2:] + ' = next( listiterator )')
         except:
-            break
-
+            break   
 
 
     # if file name is not provided, set to default

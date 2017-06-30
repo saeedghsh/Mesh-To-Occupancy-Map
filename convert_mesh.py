@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 import cv2
 
 import sys
-sys.path.append( u'../place_categorization_2D/' )
-import place_categorization as plcat
+sys.path.append( u'../Place-Categorization-2D-OGM/' )
+from core import place_categorization as plcat
 
 
 # obj file

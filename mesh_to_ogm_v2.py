@@ -37,7 +37,7 @@ Usage
 $ python mesh_to_ogm_v1.py file_name
 '''
 
-from __future__ import print_function
+# from __future__ import print_function
 
 import sys
 import numpy as np
