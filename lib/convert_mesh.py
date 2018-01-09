@@ -25,11 +25,12 @@ import matplotlib.pyplot as plt
 import cv2
 
 import sys
-sys.path.append( u'../Place-Categorization-2D-OGM/' )
+sys.path.append( u'../../Place-Categorization-2D/' )
 try:
-    from core import place_categorization as plcat
+    from place_categorization import place_categorization as plcat
 except:
-    print ('WARNING: Place-Categorization-2D is not found...')
+    print ('WARNING: convert_mesh.py can\'t load place_categorization.py -> will fail with raycasting')
+
 
 # obj file
 # http://cgkit.sourceforge.net/doc2/objmtl.html
@@ -92,7 +93,7 @@ def load_ply_file ( file_name, print_info=False ):
 
 
 ################################################################################
-def slice_horizontal_vertices(ply_data, offset=.6, interval=0.05, print_info=False):
+def slice_horizontal_vertices(ply_data, config):
     '''
     This method returns a list of indices to all vertices whos z-coordinate is 
     withing the specified interval.
@@ -120,7 +121,12 @@ def slice_horizontal_vertices(ply_data, offset=.6, interval=0.05, print_info=Fal
     idx
     A list of indices to Vertices (Vx, Vy, Vz, ...) that are in the specified inverval
     '''
+    ########## setting default value of variables if not available in config
+    offset = .6 if 'offset' not in config.keys() else config['offset']
+    interval = 0.05 if 'interval' not in config.keys() else config['interval']
+    print_info = False if 'print_info' not in config.keys() else config['print_info']
 
+    ##########
     Vz = ply_data['vertex'].data['z']
 
     # finding the vertical upper and lower bounds
@@ -219,11 +225,7 @@ def slice_horizontal_faces(ply_data,
 
 
 ################################################################################
-def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx,
-                                  mpp=.02, margin=10,
-                                  unexplored=1.,
-                                  fill_neighbors=True,
-                                  flip_vertically=True):
+def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx, config):
     '''
     Vx: x-coordinate of all vertices
     Vy: y-coordinate of all vertices
@@ -233,9 +235,17 @@ def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx,
     unexplored: since this is a pseudo-ogm, unexplored could be .5 (127) or 1 (255)
     flip_vertically: since the image storing will flip the image, this will compensate 
 
-    fill_neighbors: each point will occupy a neighbourhood of 3x3   
-
+    fill_neighbors: each point will occupy a neighbourhood of 3x3
     '''    
+
+    ########## setting default value of variables if not available in config
+    mpp = .02 if 'mpp' not in config.keys() else config['mpp']
+    margin = 10 if 'margin' not in config.keys() else config['margin']
+    unexplored = 1. if 'unexplored' not in config.keys() else config['unexplored']
+    fill_neighbors = True if 'fill_neighbors' not in config.keys() else config['fill_neighbors']
+    flip_vertically = True if 'flip_vertically' not in config.keys() else config['flip_vertically']
+
+
 
     idx = ver_sliced_idx
 
@@ -273,17 +283,76 @@ def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx,
     assert row_idx.max() < row
 
     # updating the map values - todo: this should be done much better.
-    for (r,c) in zip(row_idx,col_idx):
-        ogm[r,c] = 0.
+    ogm[row_idx,col_idx] = 0
 
     # flipping the image vertically 
-    if flip_vertically:
-        ogm = np.flipud(ogm)
+    if flip_vertically: ogm = np.flipud(ogm)
     
     # scaling the image to 255, converting to uint8, and return
     return (ogm * 255).astype(np.uint8)
 
 
+################################################################################
+def translate_to_omg_frame(ply_data,
+                           target_shape=(1585, 1585),
+                           slice_config=None,
+                           ogm_config=None
+                       ):
+    '''
+    This method takes a mesh and transform it to the frame of occupancy map.
+    The values to config dictionaries are comming from the settings that was
+    used for generating occupancy maps from mesh.
+    '''
+
+
+    ##### settings of plt_to_ogm conversion
+    if slice_config is None:
+        slice_config = {
+            'offset':   0.5,  # vertical offset - percentage of z.max -z.min
+            'interval': 0.05, # vertical interval - percentage of z.max -z.min
+        }
+
+    if ogm_config is None:    
+        ogm_config = {
+            'mpp':             0.02, # meter per pixel ratio 
+            'margin':          10
+        }
+
+    ##### setting for padding maps to square
+    (target_row, target_col) = target_shape
+
+    # extract vertices coordinates
+    Vx = ply_data['vertex'].data['x'] # f4 -> float32
+    Vy = ply_data['vertex'].data['y'] # f4 -> float32
+    Vz = ply_data['vertex'].data['z'] # f4 -> float32
+    '''
+    note that the transformation depends on the slice, since that changes the
+    extent of point cloud. So we have to perform slicing operation. hHowever,
+    the conversion to bitmap doesn't matter and we can get what we want
+    analytically
+    '''
+
+    # slice the map horizontally 
+    slice_idx = slice_horizontal_vertices(ply_data, slice_config)
+
+    # map's dimension in meter
+    width = Vx[slice_idx].max() - Vx[slice_idx].min()
+    height = Vy[slice_idx].max() - Vy[slice_idx].min()
+    # map's dimension in pixel
+    col = int(width /ogm_config['mpp']) + 2*ogm_config['margin']
+    row = int(height /ogm_config['mpp']) + 2*ogm_config['margin']
+    # margin of padding to current size
+    bottom_pad = (target_row - row) // 2
+    left_pad = (target_col - col) // 2
+    
+    # transforming coordinates of the vertices
+    # min of x-y are translated to origin, scaled by "mpp" and shifted with proper margins
+    # z is only scaled by "mpp"
+    new_Vx = (Vx-Vx[slice_idx].min()) /ogm_config['mpp'] + ogm_config['margin'] + left_pad
+    new_Vy = (Vy-Vy[slice_idx].min()) /ogm_config['mpp'] + ogm_config['margin'] + bottom_pad
+    new_Vz = Vz / ogm_config['mpp']
+
+    return new_Vx, new_Vy, new_Vz
 
 ################################################################################
 def create_mpath ( points ):
@@ -389,7 +458,7 @@ class RayCastPatcher:
             # left click adds a new point to the queue
             if event.xdata is not None:
                 [x, y] = [int(event.xdata), int(event.ydata)]
-                self.points.append([x, y, 0])
+                self.points.append([x, y])
                 self.fig.axes[0].plot(x, y, 'r*')
                 plt.draw()
 
@@ -423,13 +492,17 @@ class RayCastPatcher:
     def raycast_set_open(self, pose):
         '''
         '''
-        r,t = plcat.raycast_bitmap(self.image, pose,
-                                   self.raycast_config['occupancy_thr'],
-                                   self.raycast_config['length_range'],
-                                   self.raycast_config['length_steps'], 
-                                   self.raycast_config['theta_range'],
-                                   self.raycast_config['theta_res'],
-                                   self.raxy)
+        r,t = plcat.raycast_bitmap(pose=pose,
+                                   image=self.image,
+                                   occupancy_thr=self.raycast_config['occupancy_thr'],
+                                   length_range=self.raycast_config['length_range'],
+                                   length_steps=self.raycast_config['length_steps'], 
+                                   theta_range=self.raycast_config['theta_range'],
+                                   theta_res=self.raycast_config['theta_res'],
+                                   rays_array_xy=self.raxy,
+                                   # mpp= 0.02,
+                                   # range_res =1,
+        )
 
         pts = np.stack( (pose[0]+r*np.cos(t), pose[1]+r*np.sin(t)), axis=1)
         path = create_mpath(pts)

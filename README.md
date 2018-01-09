@@ -20,3 +20,10 @@ Laundry List
 - [ ] draw lines from point to point during the interactive process
 - [ ] title each figure with description (short instruction?)
 - [ ] use skiz to pick raycasting points?
+
+License
+-------
+Distributed with a GNU GENERAL PUBLIC LICENSE; see [LICENSE](https://github.com/saeedghsh/Mesh-To-Occupancy-Map/blob/master/LICENSE).
+```
+Copyright (C) Saeed Gholami Shahbandi
+```
