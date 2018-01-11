@@ -61,7 +61,7 @@ def load_ply_file ( file_name, print_info=False ):
     # ply_data['face'].data['vertex_indices'][0] # -> array([0, 1, 2], dtype=int32)
     # ply_data['vertex']['x'] # -> array([ 0.,  0.,  1.,  1.], dtype=float32)
     # ply_data['vertex'][0] # -> (0.0, 0.0, 0.0)
-    
+
     # note that ply_data['vertex'].data is a numpy structured array
     # https://docs.scipy.org/doc/numpy/user/basics.rec.html
     # b1, i1, i2, i4, i8, u1, u2, u4, u8, f2, f4, f8, c8, c16, a<n>
@@ -81,7 +81,7 @@ def load_ply_file ( file_name, print_info=False ):
     Va = ply_data['vertex'].data['alpha'] # u1 -> usigned int 8
 
     faces = np.array([ face[0] for face in ply_data['face'] ])
-    
+
     if print_info:
         print ('\t count: ', ply_data.elements[0].count)
         print ( 'dimensions\' bound' )
@@ -95,7 +95,7 @@ def load_ply_file ( file_name, print_info=False ):
 ################################################################################
 def slice_horizontal_vertices(ply_data, config):
     '''
-    This method returns a list of indices to all vertices whos z-coordinate is 
+    This method returns a list of indices to all vertices whos z-coordinate is
     withing the specified interval.
 
     Input
@@ -147,7 +147,7 @@ def slice_horizontal_vertices(ply_data, config):
 ################################################################################
 def slice_horizontal_faces(ply_data,
                            inclusion=['any', 'all'][0],
-                           offset=.7, interval=0.005, print_info=False):   
+                           offset=.7, interval=0.005, print_info=False):
     '''
     This method returns a list of indices to all faces whos vertices are within
     the vertical bound (vertices whos z-coordinate is withing the specified interval).
@@ -172,7 +172,7 @@ def slice_horizontal_faces(ply_data,
     If inclusion is set to 'any', those faces who has atleast one vertex in the
     specified interval all returned, otherwise if it's set to 'all', only faces
     with all veritces in the specified interval are returned.
-    
+
 
     print_info (default: False)
     If True, the statistics of slicing is printed
@@ -190,37 +190,37 @@ def slice_horizontal_faces(ply_data,
     '''
 
     Vz = ply_data['vertex'].data['z']
-        
+
     # finding the vertical upper and lower bounds
     z_range = np.abs(Vz.max() - Vz.min())
     z_centr = Vz.min() + offset*z_range
     z_lb = z_centr - interval*z_range
     z_ub = z_centr + interval*z_range
-    
+
     # each face in faces is an array of vertices' indices (v1_idx, v2_idx, v3_idx)
     faces = np.array([ face[0] for face in ply_data['face'] ])
-    
+
     # each element [i,j] in faces_z correspoinds to z-coordinate of the
     # vertex whos index is stored in faces
     # (Vz.shape = l) and (faces.shape = mx3) -> Vz[faces].shape = mx3
     faces_z = Vz[faces]
-    
+
     # faces.shape = mx3 -> np.where(cond(faces),a,b).shape = mx3
     # mask.shape =  mx3 -> mask.all(axis=1).shape == mx1
     if inclusion == 'any':
         mask = np.where((z_lb<faces_z) & (faces_z<z_ub), True, False).any(axis=1)
     elif inclusion == 'all':
         mask = np.where((z_lb<faces_z) & (faces_z<z_ub), True, False).all(axis=1)
-    
+
     # indices to faces whos all/any vertices are within the vertical bound
     idx = np.where(mask)[0]
-    
+
     if print_info:
         msg = '\t ({:d}/{:d} ~{:.2f}%) faces (offset:{:.2f}, interval:{:.2f})'
         print ( msg.format( len(idx), faces.shape[0],
                             float(len(idx))/faces.shape[0],
                             offset, interval ) )
-        
+
     return idx
 
 
@@ -233,10 +233,10 @@ def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx, config):
     mpp: meter per pixel - 1.0 -> 1pixel = 1m|1000mm
     margin: the margin around the map
     unexplored: since this is a pseudo-ogm, unexplored could be .5 (127) or 1 (255)
-    flip_vertically: since the image storing will flip the image, this will compensate 
+    flip_vertically: since the image storing will flip the image, this will compensate
 
     fill_neighbors: each point will occupy a neighbourhood of 3x3
-    '''    
+    '''
 
     ########## setting default value of variables if not available in config
     mpp = .02 if 'mpp' not in config.keys() else config['mpp']
@@ -263,9 +263,9 @@ def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx, config):
     # indices of the vertices from "ver_sliced_idx" in pixel coordinate (row/col)
     row_idx = ((Vy[idx]-Vy[idx].min()) /mpp).astype(np.uint32) + margin
     col_idx = ((Vx[idx]-Vx[idx].min()) /mpp).astype(np.uint32) + margin
-    
 
-    if fill_neighbors:    
+
+    if fill_neighbors:
         row_idx = np.stack( (row_idx-1, row_idx-1, row_idx-1,
                              row_idx,   row_idx,   row_idx,
                              row_idx+1, row_idx+1, row_idx+1)
@@ -274,7 +274,7 @@ def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx, config):
                              col_idx-1, col_idx, col_idx+1,
                              col_idx-1, col_idx, col_idx+1)
                             , axis=0 )
-        
+
 
     # checking that all the pixel-indices are in bound
     assert col_idx.min() >= 0
@@ -285,9 +285,9 @@ def convert_2d_pointcloud_to_ogm (Vx,Vy, ver_sliced_idx, config):
     # updating the map values - todo: this should be done much better.
     ogm[row_idx,col_idx] = 0
 
-    # flipping the image vertically 
+    # flipping the image vertically
     if flip_vertically: ogm = np.flipud(ogm)
-    
+
     # scaling the image to 255, converting to uint8, and return
     return (ogm * 255).astype(np.uint8)
 
@@ -312,9 +312,9 @@ def translate_to_omg_frame(ply_data,
             'interval': 0.05, # vertical interval - percentage of z.max -z.min
         }
 
-    if ogm_config is None:    
+    if ogm_config is None:
         ogm_config = {
-            'mpp':             0.02, # meter per pixel ratio 
+            'mpp':             0.02, # meter per pixel ratio
             'margin':          10
         }
 
@@ -332,7 +332,7 @@ def translate_to_omg_frame(ply_data,
     analytically
     '''
 
-    # slice the map horizontally 
+    # slice the map horizontally
     slice_idx = slice_horizontal_vertices(ply_data, slice_config)
 
     # map's dimension in meter
@@ -344,7 +344,7 @@ def translate_to_omg_frame(ply_data,
     # margin of padding to current size
     bottom_pad = (target_row - row) // 2
     left_pad = (target_col - col) // 2
-    
+
     # transforming coordinates of the vertices
     # min of x-y are translated to origin, scaled by "mpp" and shifted with proper margins
     # z is only scaled by "mpp"
@@ -359,7 +359,7 @@ def create_mpath ( points ):
     '''
     note: points must be in order
     '''
-    
+
     # start path
     verts = [ (points[0,0], points[0,1]) ]
     codes = [ mpath.Path.MOVETO ]
@@ -395,7 +395,7 @@ def get_pixels_in_mpath(path, image_shape):
 
     x, y = np.meshgrid( range(xmin,xmax+1), range(ymin,ymax+1) )
     mbb_pixels = np.stack( (x.flatten().T,y.flatten().T), axis=1)
-    
+
     in_path = path.contains_points(mbb_pixels)
 
     return mbb_pixels[in_path, :]
@@ -408,8 +408,8 @@ def process_image(image, k_size=3, bin_thr=[127, 255]):
     # converting to binary, for the layout-images
     thr1,thr2 = bin_thr
     ret, image = cv2.threshold(image.astype(np.uint8) , thr1,thr2 , cv2.THRESH_BINARY)
-    
-    # erode to make the ogm suitable for raycasting    
+
+    # erode to make the ogm suitable for raycasting
     kernel = np.ones((k_size,k_size),np.uint8)
     image = cv2.erode(image, kernel, iterations = 3)
     image = cv2.medianBlur(image, k_size)
@@ -438,7 +438,7 @@ class RayCastPatcher:
         self.raycast_config = raycast_config
         self.raxy = plcat.construct_raycast_array(np.array([0,0,0]), # x,y,theta
                                                   raycast_config['length_range'],
-                                                  raycast_config['length_steps'], 
+                                                  raycast_config['length_steps'],
                                                   raycast_config['theta_range'],
                                                   raycast_config['theta_res']
                                               )
@@ -446,7 +446,7 @@ class RayCastPatcher:
         #  draw the image
         self._reset_drawing()
 
-    ########################################        
+    ########################################
     def __call__(self, event):
         '''
         since self is passed to mpl_connect as the callback method
@@ -474,7 +474,7 @@ class RayCastPatcher:
             self.patched = True
 
             # drawing modified image
-            self._reset_drawing()            
+            self._reset_drawing()
             self.points = []
 
     ########################################
@@ -496,7 +496,7 @@ class RayCastPatcher:
                                    image=self.image,
                                    occupancy_thr=self.raycast_config['occupancy_thr'],
                                    length_range=self.raycast_config['length_range'],
-                                   length_steps=self.raycast_config['length_steps'], 
+                                   length_steps=self.raycast_config['length_steps'],
                                    theta_range=self.raycast_config['theta_range'],
                                    theta_res=self.raycast_config['theta_res'],
                                    rays_array_xy=self.raxy,
@@ -529,7 +529,7 @@ class ROIPatcher:
 
         #  draw the image
         self._reset_drawing()
-        
+
     def __call__(self, event):
         '''
         since self is passed to mpl_connect as the callback method
@@ -559,7 +559,7 @@ class ROIPatcher:
                        self.pixels_in_path[:,0]] = self.patch_value
 
             # drawing modified image
-            self._reset_drawing()            
+            self._reset_drawing()
 
             # point selection is reset to allow iterations of patching
             self.points = []

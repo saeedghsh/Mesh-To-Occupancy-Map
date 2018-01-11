@@ -21,11 +21,11 @@ License along with this program. If not, see
 Mesh to Occupance Map Convertor - version 0.1
 
 This script loads a mesh (.ply) and converts it to a bitmap Occupancy Grid Map (.png).
-Set of mesh vertices is treated as a point cloud. 
+Set of mesh vertices is treated as a point cloud.
 The point cloud is horizontally sliced (according to provided parameters),
 The resulting point-set is converted into a bitmap.
 Pixels who contain a vertex of the sliced pointcloud are set to occupied.
-Rest of the pixels are set to a predefined value (see "unexplored" parameter). 
+Rest of the pixels are set to a predefined value (see "unexplored" parameter).
 
 
 Options
@@ -62,13 +62,13 @@ import convert_mesh
 
 ################################################################################
 def main(filename, slice_config, ogm_config, save, visu ):
-    
+
     print ('\t loading ply file ...')
     ply_data, faces, [Vx, Vy, Vz, Vr, Vg, Vb, Va] = convert_mesh.load_ply_file( filename )
 
     print ('\t horizontal slicing ...')
     slice_idx = convert_mesh.slice_horizontal_vertices(ply_data, slice_config)
-        
+
     print ('\t converting...')
     # generating the ogm
     ogm = convert_mesh.convert_2d_pointcloud_to_ogm(Vx,Vy, slice_idx, ogm_config)
@@ -89,7 +89,7 @@ def main(filename, slice_config, ogm_config, save, visu ):
 
 ################################################################################
 if __name__ == '__main__':
-        
+
     slice_config = {
         # 'offset':   0.5,  # vertical offset - percentage of z.max -z.min
         # 'interval': 0.05, # vertical interval - percentage of z.max -z.min
@@ -97,16 +97,16 @@ if __name__ == '__main__':
         'offset':   0.5,  # vertical offset - percentage of z.max -z.min
         'interval': 0.05, # vertical interval - percentage of z.max -z.min
     }
-        
+
     ogm_config = {
-        'mpp':             0.02, # meter per pixel ratio 
+        'mpp':             0.02, # meter per pixel ratio
         'margin':          10, # map margin
         'unexplored':      0.5, # value for unexplored pixels (.5:127 - 1.:255)
         'fill_neighbors':  True,
         'flip_vertically': True
     }
-    
-    
+
+
     args = sys.argv
 
     # visualization/saving options
@@ -119,11 +119,11 @@ if __name__ == '__main__':
         elif ('-v' in arg):
             visu = True
 
-    if not(visu) and not(save): visu = True 
-            
+    if not(visu) and not(save): visu = True
+
     # fetching parameters from input arguments
     # parameters are marked with double dash,
-    # the value of a parameter is the next argument   
+    # the value of a parameter is the next argument
     listiterator = args[1:].__iter__()
     while 1:
         try:
@@ -139,4 +139,3 @@ if __name__ == '__main__':
     else:
         print ('\n *** NO FILE IS SPECIFIED, Here is how to use this script ***')
         print (__doc__)
-

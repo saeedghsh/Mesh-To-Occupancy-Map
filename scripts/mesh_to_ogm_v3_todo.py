@@ -51,7 +51,7 @@ import matplotlib.patches as mpatches
 
 import plyfile
 
-import convert_mesh 
+import convert_mesh
 reload(convert_mesh)
 import place_categorization as plcat
 reload(plcat)
@@ -77,7 +77,7 @@ print ('\b - time elapsed: {:.2f}'.format(time.time() - tic))
 offset = .6 # vertical offset - percentage of z.max -z.min
 interval = 0.05 # vertical interval - percentage of z.max -z.min
 
-mpp = .02 # meter per pixel ratio 
+mpp = .02 # meter per pixel ratio
 margin = 40 # map margin
 unexplored = .5 # value for unexplored pixels (.5:127 - 1.:255)
 
@@ -133,7 +133,7 @@ print ('\b - time elapsed: {:.2f}'.format(time.time() - tic))
 # ####### plot raycast array
 # x_ = rays_array_xy[0,:,:].flatten()
 # y_ = rays_array_xy[1,:,:].flatten()
-# rc = np.stack( (x_, y_), axis=1)    
+# rc = np.stack( (x_, y_), axis=1)
 # plot_point_sets (src=points, dst=rc)
 
 
@@ -165,7 +165,7 @@ print ('\b - time elapsed: {:.2f}'.format(time.time() - tic))
 # ogm = convert_mesh.process_image(ogm, k_size=3, bin_thr=[126, 255])
 
 
-# ########## drawing edges of faces as lines 
+# ########## drawing edges of faces as lines
 # # THIS DOESN'T WORK, BECAUSE ALL EDGES ARE SHORTER THAN 1
 # # AND NO LINE IS DRAWN
 # tic = time.time()
@@ -173,7 +173,7 @@ print ('\b - time elapsed: {:.2f}'.format(time.time() - tic))
 # thickness=2
 # for v1,v2,v3 in faces[fce_slice_idx]:
 #     p1, p2 = (Vx[v1],Vy[v1]) , (Vx[v2],Vy[v2])
-#     ogm = cv2.line(ogm, p1, p2, val, thickness) 
+#     ogm = cv2.line(ogm, p1, p2, val, thickness)
 #     p1, p2 = (Vx[v1],Vy[v1]) , (Vx[v3],Vy[v3])
 #     ogm = cv2.line(ogm, p1, p2, val, thickness)
 #     p1, p2 = (Vx[v3],Vy[v3]) , (Vx[v2],Vy[v2])
@@ -182,7 +182,7 @@ print ('\b - time elapsed: {:.2f}'.format(time.time() - tic))
 
 
 
-#################### 
+####################
 # idx1 = convert_mesh.slice_horizontal_vertices(ply_data, offset=0.1, interval=0.0001)
 # idx2 = convert_mesh.slice_horizontal_vertices(ply_data, offset=0.4, interval=0.0001)
 # idx3 = convert_mesh.slice_horizontal_vertices(ply_data, offset=0.7, interval=0.0001)
@@ -194,9 +194,7 @@ print ('\b - time elapsed: {:.2f}'.format(time.time() - tic))
 # c_point = np.array([0,0]) # centre point for range scan
 # points = np.stack( (Vx[vrt_slice_idx], Vy[vrt_slice_idx]), axis=1)
 # dist_2_centre = (Vx[vrt_slice_idx]-c_point[1])**2 + (Vy[vrt_slice_idx]-c_point[0])**2
-# in_circle_idx = 
+# in_circle_idx =
 
 
 # ls = lambda s,E,stp: np.array([ np.linspace(s,e, num=stp, endpoint=True) for e in E])
-
-
